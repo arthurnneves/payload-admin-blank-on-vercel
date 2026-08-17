@@ -6,6 +6,7 @@ import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { pt } from '@payloadcms/translations/languages/pt'
 import { s3Storage } from '@payloadcms/storage-s3'
+import { rotasReservadas } from './lib/rotasReservadas'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -37,6 +38,10 @@ const slugUnico: Field = {
   },
   validate: (async (valor, { req }) => {
     if (typeof valor !== 'string' || valor.trim() === '') return 'Informe o slug.'
+    // TESTE 6: a validação consulta a lista que vem do módulo com `fs`.
+    if (rotasReservadas().includes(valor)) {
+      return `"${valor}" é uma seção do site e não pode ser usada como slug.`
+    }
     const conflito = await req.payload.find({
       collection: 'posts' as const,
       where: { titulo: { equals: valor } },
