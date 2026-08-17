@@ -12,6 +12,14 @@ const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 
 /**
+ * TESTE 7: leitura de `process.argv` no escopo do módulo de configuração,
+ * exatamente como no projeto real. No navegador `process.argv` não existe.
+ */
+const rodandoMigracao = process.argv.some((argumento) => argumento.startsWith('migrate'))
+const conexao =
+  (rodandoMigracao ? process.env.DATABASE_URI_DIRETO : undefined) || process.env.DATABASE_URI || ''
+
+/**
  * Minimal reproduction of: the Payload admin panel renders blank when deployed
  * to Vercel, while the very same build renders it correctly with `next start`
  * locally.
@@ -122,7 +130,7 @@ export default buildConfig({
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   db: postgresAdapter({
-    pool: { connectionString: process.env.DATABASE_URI || '' },
+    pool: { connectionString: conexao },
   }),
   sharp,
   // TESTE 3: plugin de armazenamento remoto, como no projeto real. As
