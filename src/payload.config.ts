@@ -1,7 +1,7 @@
 import path from 'path'
 import { fileURLToPath } from 'url'
 import sharp from 'sharp'
-import { buildConfig } from 'payload'
+import { buildConfig, type Field, type TextFieldSingleValidation } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { pt } from '@payloadcms/translations/languages/pt'
@@ -17,6 +17,36 @@ const dirname = path.dirname(filename)
  *
  * Deliberately minimal: one auth collection, the default editor, nothing else.
  */
+/**
+ * O campo de slug do projeto real: criado por uma função que devolve `Field`,
+ * com validação assíncrona que consulta o banco.
+ */
+const slugUnico: Field = {
+  name: 'slug',
+  type: 'text',
+  unique: true,
+  index: true,
+  hooks: {
+    beforeValidate: [
+      ({ value, data }) => {
+        if (typeof value === 'string' && value.trim() !== '') return value.toLowerCase()
+        const base = (data as { nome?: unknown } | undefined)?.nome
+        return typeof base === 'string' ? base.toLowerCase() : value
+      },
+    ],
+  },
+  validate: (async (valor, { req }) => {
+    if (typeof valor !== 'string' || valor.trim() === '') return 'Informe o slug.'
+    const conflito = await req.payload.find({
+      collection: 'posts' as const,
+      where: { titulo: { equals: valor } },
+      limit: 1,
+      depth: 0,
+    })
+    return conflito.docs[0] ? 'Já existe conteúdo com esse slug.' : true
+  }) as TextFieldSingleValidation,
+}
+
 export default buildConfig({
   admin: {
     user: 'users',
@@ -61,31 +91,7 @@ export default buildConfig({
       slug: 'categorias',
       fields: [
         { name: 'nome', type: 'text', required: true },
-        {
-          name: 'slug',
-          type: 'text',
-          unique: true,
-          index: true,
-          hooks: {
-            beforeValidate: [
-              ({ value, data }) => {
-                if (typeof value === 'string' && value.trim() !== '') return value.toLowerCase()
-                const base = (data as { nome?: unknown } | undefined)?.nome
-                return typeof base === 'string' ? base.toLowerCase() : value
-              },
-            ],
-          },
-          validate: async (valor: unknown, { req }: { req: { payload: { find: (a: unknown) => Promise<{ docs: unknown[] }> } } }) => {
-            if (typeof valor !== 'string' || valor.trim() === '') return 'Informe o slug.'
-            const conflito = await req.payload.find({
-              collection: 'posts',
-              where: { titulo: { equals: valor } },
-              limit: 1,
-              depth: 0,
-            })
-            return conflito.docs[0] ? 'Já existe conteúdo com esse slug.' : true
-          },
-        },
+        slugUnico,
       ],
     },
     {
