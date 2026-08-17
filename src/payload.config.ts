@@ -4,6 +4,7 @@ import sharp from 'sharp'
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { pt } from '@payloadcms/translations/languages/pt'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -19,6 +20,11 @@ export default buildConfig({
   admin: {
     user: 'users',
     importMap: { baseDir: path.resolve(dirname) },
+  },
+  // TESTE 1 do bissecção: idioma do painel em português, como no projeto real.
+  i18n: {
+    supportedLanguages: { pt },
+    fallbackLanguage: 'pt',
   },
   collections: [
     {

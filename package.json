@@ -16,6 +16,7 @@
     "@payloadcms/db-postgres": "3.87.1",
     "@payloadcms/next": "3.87.1",
     "@payloadcms/richtext-lexical": "3.87.1",
+    "@payloadcms/translations": "3.87.1",
     "@payloadcms/ui": "3.87.1",
     "cross-env": "^7.0.3",
     "graphql": "^16.8.1",
