@@ -5,6 +5,7 @@ import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { pt } from '@payloadcms/translations/languages/pt'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -37,6 +38,21 @@ export default buildConfig({
       auth: true,
       fields: [{ name: 'nome', type: 'text' }],
     },
+    // TESTE 3: coleção de upload, como no projeto real.
+    {
+      slug: 'media',
+      upload: {
+        staticDir: path.resolve(dirname, '../public/media'),
+        mimeTypes: ['image/*'],
+        formatOptions: { format: 'webp', options: { quality: 80 } },
+        imageSizes: [
+          { name: 'miniatura', width: 400, height: 300, position: 'centre' },
+          { name: 'card', width: 768 },
+          { name: 'capa', width: 1600 },
+        ],
+      },
+      fields: [{ name: 'alt', type: 'text', required: true }],
+    },
     {
       slug: 'posts',
       // TESTE 2: rascunhos com publicação agendada, como no projeto real.
@@ -56,5 +72,19 @@ export default buildConfig({
     pool: { connectionString: process.env.DATABASE_URI || '' },
   }),
   sharp,
+  // TESTE 3: plugin de armazenamento remoto, como no projeto real. As
+  // credenciais são falsas de propósito — o que está sendo testado é o efeito
+  // do plugin sobre o painel, e a tela de criar usuário não envia arquivo.
+  plugins: [
+    s3Storage({
+      collections: { media: true },
+      bucket: 'bucket-de-teste',
+      config: {
+        endpoint: 'https://exemplo.r2.cloudflarestorage.com',
+        region: 'auto',
+        credentials: { accessKeyId: 'chave-falsa', secretAccessKey: 'segredo-falso' },
+      },
+    }),
+  ],
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },
 })
