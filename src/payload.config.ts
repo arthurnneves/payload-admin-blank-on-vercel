@@ -20,6 +20,11 @@ export default buildConfig({
   admin: {
     user: 'users',
     importMap: { baseDir: path.resolve(dirname) },
+    // TESTE 2: formato de data e fuso padrão, como no projeto real.
+    dateFormat: 'dd/MM/yyyy HH:mm',
+    timezones: {
+      defaultTimezone: 'America/Sao_Paulo',
+    },
   },
   // TESTE 1 do bissecção: idioma do painel em português, como no projeto real.
   i18n: {
@@ -34,6 +39,11 @@ export default buildConfig({
     },
     {
       slug: 'posts',
+      // TESTE 2: rascunhos com publicação agendada, como no projeto real.
+      versions: {
+        maxPerDoc: 20,
+        drafts: { autosave: false, schedulePublish: true },
+      },
       fields: [
         { name: 'titulo', type: 'text', required: true },
         { name: 'conteudo', type: 'richText' },
