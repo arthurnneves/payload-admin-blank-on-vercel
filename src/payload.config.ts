@@ -53,6 +53,41 @@ export default buildConfig({
       },
       fields: [{ name: 'alt', type: 'text', required: true }],
     },
+    // TESTE 4: campo com validação ASSÍNCRONA que consulta o banco, e
+    // relacionamento com filterOptions — os dois padrões do projeto real.
+    // Validação de campo viaja para o pacote do navegador; se ela quebrar lá,
+    // o painel pode parar de montar sem dizer nada.
+    {
+      slug: 'categorias',
+      fields: [
+        { name: 'nome', type: 'text', required: true },
+        {
+          name: 'slug',
+          type: 'text',
+          unique: true,
+          index: true,
+          hooks: {
+            beforeValidate: [
+              ({ value, data }) => {
+                if (typeof value === 'string' && value.trim() !== '') return value.toLowerCase()
+                const base = (data as { nome?: unknown } | undefined)?.nome
+                return typeof base === 'string' ? base.toLowerCase() : value
+              },
+            ],
+          },
+          validate: async (valor: unknown, { req }: { req: { payload: { find: (a: unknown) => Promise<{ docs: unknown[] }> } } }) => {
+            if (typeof valor !== 'string' || valor.trim() === '') return 'Informe o slug.'
+            const conflito = await req.payload.find({
+              collection: 'posts',
+              where: { titulo: { equals: valor } },
+              limit: 1,
+              depth: 0,
+            })
+            return conflito.docs[0] ? 'Já existe conteúdo com esse slug.' : true
+          },
+        },
+      ],
+    },
     {
       slug: 'posts',
       // TESTE 2: rascunhos com publicação agendada, como no projeto real.
@@ -63,6 +98,13 @@ export default buildConfig({
       fields: [
         { name: 'titulo', type: 'text', required: true },
         { name: 'conteudo', type: 'richText' },
+        {
+          name: 'autores',
+          type: 'relationship',
+          relationTo: 'users',
+          hasMany: true,
+          filterOptions: () => ({ nome: { not_equals: 'ninguem' } }),
+        },
       ],
     },
   ],
