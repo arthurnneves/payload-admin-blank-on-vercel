@@ -1,3 +1,22 @@
+> **Resolved — and the cause was NOT in Payload.** This reproduction did its job
+> by *failing* to reproduce: seven configuration groups were added to it without
+> ever breaking the admin, which proved that Payload 3.87.1 + Next 16.3.0 on
+> Vercel works. The bug was in the original application: its S3/R2 storage plugin
+> was only added to the config when the credentials existed, so `importMap.js`
+> was generated and committed **without the plugin's client components**. In
+> production the plugin was active, the admin requested components the map did
+> not declare, and nothing mounted — silently, because a component missing from
+> the import map does not throw.
+>
+> The rule that came out of it: what varies per environment must be the *value*,
+> never the *presence* of a plugin — and the import map has to be generated in
+> the same state production runs in.
+>
+> No issue was filed against payloadcms/payload. This repository is archived and
+> kept only as a record of the method.
+
+---
+
 # Reproduction: Payload admin renders blank on Vercel (works with `next start`)
 
 Minimal Payload app — one auth collection, one content collection, default
